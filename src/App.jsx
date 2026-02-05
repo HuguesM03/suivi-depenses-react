@@ -1,111 +1,115 @@
 import { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient'; // On importe la connexion
 import Header from './components/Header';
 import Balance from './components/Balance';
 import IncomeExpense from './components/IncomeExpense';
 import TransactionList from './components/TransactionList';
 import AddTransaction from './components/AddTransaction';
 import ExpenseChart from './components/ExpenseChart'; 
-import Legal from './components/Legal'; // Import du nouveau composant
+import Legal from './components/Legal';
 import './App.css';
 
 function App() {
-  // --- ÉTATS (STATES) ---
-  const [transactions, setTransactions] = useState(JSON.parse(localStorage.getItem('transactions')) || []);
-  const [archives, setArchives] = useState(JSON.parse(localStorage.getItem('archives')) || []);
+  const [transactions, setTransactions] = useState([]);
   const [currency, setCurrency] = useState('€');
-  const [selectedArchive, setSelectedArchive] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isLegalOpen, setIsLegalOpen] = useState(false); // État pour la modale légale
+  const [isLegalOpen, setIsLegalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // --- PERSISTENCE (LOCALSTORAGE) ---
+  // --- CHARGEMENT INITIAL (Lecture BDD) ---
   useEffect(() => {
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-    localStorage.setItem('archives', JSON.stringify(archives));
-  }, [transactions, archives]);
+    fetchTransactions();
+  }, []);
 
-  // --- ACTIONS ---
-  const addTransaction = (t) => setTransactions([...transactions, t]);
+  async function fetchTransactions() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  const deleteTransaction = (id) => {
-    if (window.confirm("Supprimer cette transaction ?")) {
-      setTransactions(transactions.filter(t => t.id !== id));
+    if (error) {
+      console.error('Erreur Supabase:', error.message);
+    } else {
+      setTransactions(data || []);
+    }
+    setLoading(false);
+  }
+
+  // --- AJOUTER UNE TRANSACTION ---
+  const addTransaction = async (newT) => {
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert([{ 
+        text: newT.text, 
+        amount: newT.amount,
+        category: newT.category || 'Divers' 
+      }])
+      .select();
+
+    if (error) {
+      alert("Erreur lors de l'envoi : " + error.message);
+    } else {
+      setTransactions([data[0], ...transactions]);
     }
   };
 
-  const handleClearRequest = () => {
-    if (transactions.length === 0) return;
-    if (window.confirm("Voulez-vous vraiment vider tout l'historique ?")) {
-      const wantToArchive = window.confirm("Souhaitez-vous ARCHIVER ces données avant de supprimer ?");
-      if (wantToArchive) {
-        const newArchive = {
-          id: Date.now(),
-          date: new Date().toLocaleString(),
-          data: [...transactions],
-          totalAmount: transactions.reduce((acc, item) => (acc += item.amount), 0).toFixed(2)
-        };
-        setArchives([newArchive, ...archives]);
+  // --- SUPPRIMER UNE TRANSACTION ---
+  const deleteTransaction = async (id) => {
+    if (window.confirm("Supprimer définitivement de la base de données ?")) {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        alert("Erreur lors de la suppression");
+      } else {
+        setTransactions(transactions.filter(t => t.id !== id));
       }
-      setTransactions([]);
     }
   };
 
-  const deleteArchive = (id, e) => {
-    e.stopPropagation(); 
-    if (window.confirm("Supprimer définitivement cette archive ?")) {
-      setArchives(archives.filter(a => a.id !== id));
-      if (selectedArchive?.id === id) setSelectedArchive(null);
+  // --- VIDER TOUT ---
+  const handleClearRequest = async () => {
+    if (transactions.length === 0) return;
+    if (window.confirm("Voulez-vous vraiment vider TOUTES les données du cloud ?")) {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .neq('id', 0); // Supprime tout
+
+      if (!error) setTransactions([]);
     }
   };
 
   return (
     <div className={`app-layout ${isSidebarOpen ? '' : 'sidebar-closed'}`}>
       
-      {/* BOUTON TOGGLE SIDEBAR */}
       <button className="toggle-sidebar-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
         {isSidebarOpen ? '✕ Fermer' : '☰ Archives'}
       </button>
 
-      {/* BARRE LATÉRALE (ARCHIVES) */}
       <div className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '50px', paddingBottom: '20px'}}>
-           <h3>Archives</h3>
-           {selectedArchive && <button onClick={() => setSelectedArchive(null)} className="header-btn" style={{fontSize: '0.7rem'}}>Retour</button>}
+        <div style={{marginTop: '50px', padding: '20px'}}>
+           <h3>Menu</h3>
+           <p style={{fontSize: '0.8rem', color: '#2ecc71'}}>● Connecté au Cloud</p>
         </div>
-        {archives.length === 0 ? <p style={{opacity: 0.5, fontSize: '0.8rem'}}>Aucune archive enregistrée.</p> : 
-          archives.map(archive => (
-            <div key={archive.id} className={`archive-item ${selectedArchive?.id === archive.id ? 'active' : ''}`} onClick={() => setSelectedArchive(archive)}>
-              <strong>{archive.date}</strong>
-              <p>{archive.data.length} transactions</p>
-              <p style={{fontSize: '0.7rem', color: '#2ecc71'}}>Bilan: {archive.totalAmount}{currency}</p>
-              <button onClick={(e) => deleteArchive(archive.id, e)} className="delete-archive-btn">×</button>
-            </div>
-          ))
-        }
       </div>
 
-      {/* CONTENU PRINCIPAL */}
       <div className="main-content">
         <Header />
         
         <div className="container">
-          {selectedArchive ? (
-            /* VUE ARCHIVE */
-            <div className="archive-view">
-              <button onClick={() => setSelectedArchive(null)} className="btn-submit" style={{backgroundColor: '#34495e', marginBottom: '20px'}}>
-                ← Retour au suivi actuel
-              </button>
-              <h3 style={{textAlign: 'center', margin: '20px 0'}}>Archive du {selectedArchive.date}</h3>
-              <Balance transactions={selectedArchive.data} currency={currency} />
-              <IncomeExpense transactions={selectedArchive.data} currency={currency} />
-              <ExpenseChart transactions={selectedArchive.data} />
-              <TransactionList transactions={selectedArchive.data} onDelete={() => {}} onClear={() => {}} currency={currency} />
+          {loading ? (
+            <div style={{textAlign: 'center', padding: '20px'}}>
+              <p>Chargement de vos finances sécurisées...</p>
             </div>
           ) : (
-            /* VUE ACTUELLE */
             <>
               <div style={{ marginBottom: '30px', textAlign: 'center' }}>
-                <label style={{marginRight: '10px'}}>Dispositif : </label>
-                <select style={{width: 'auto', display: 'inline-block'}} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                <label>Devise : </label>
+                <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
                   <option value="€">Euro (€)</option>
                   <option value="$">Dollar ($)</option>
                   <option value="FCFA">FCFA</option>
@@ -125,20 +129,15 @@ function App() {
             </>
           )}
 
-          {/* FOOTER AVEC LIEN LÉGAL */}
           <footer style={{ marginTop: '60px', paddingBottom: '40px', textAlign: 'center', opacity: 0.6 }}>
-             <p style={{marginBottom: '10px'}}>Copyright <strong>2026, Hugues_Manøng / ExpenseTracker.</strong></p>
-            <button 
-              onClick={() => setIsLegalOpen(true)} 
-              className="legal-link"
-            >
-              Mentions Légales & Confidentialité
+            <p>Propulsé par Supabase | Créé par <strong>Hugues_Manøng 🏴‍☠️</strong></p>
+            <button onClick={() => setIsLegalOpen(true)} className="legal-link">
+              Mentions Légales
             </button>
           </footer>
         </div>
       </div>
 
-      {/* COMPOSANT MODALE LÉGALE */}
       <Legal isOpen={isLegalOpen} onClose={() => setIsLegalOpen(false)} />
     </div>
   );
