@@ -23,16 +23,15 @@ export default function AddTransaction({ onAdd }) {
       finalAmount = -finalAmount;
     }
 
-    const newTransaction = {
-      id: Math.floor(Math.random() * 100000000),
-      text: `${text} (${category})`,
-      amount: finalAmount
+   const newTransaction = {
+      text,
+      amount: parseFloat(amount), // Conversion impérative en nombre
+      category: 'Divers' // Optionnel : tu pourras ajouter un select plus tard
     };
 
     onAdd(newTransaction);
     setText('');
     setAmount('');
-    setCategory('Autre');
   };
 
   return (
