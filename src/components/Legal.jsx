@@ -8,6 +8,7 @@ export default function Legal({ isOpen, onClose }) {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <header style={{ borderBottom: '1px solid #ddd', marginBottom: '15px', paddingBottom: '10px' }}>
           <h2 style={{ margin: 0 }}>⚖️ Mentions Légales</h2>
+          <span title="Données synchronisées dans le cloud" style={{ fontSize: '1.2rem' }}>☁️</span>
         </header>
         
         <div style={{ maxHeight: '70vh', overflowY: 'auto', fontSize: '0.9rem', lineHeight: '1.5' }}>
