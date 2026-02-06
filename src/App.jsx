@@ -41,7 +41,7 @@ function App() {
       fetchArchiveNames();
       fetchTransactions();
     }
-  }, [session, cite: 3]);
+  }, [session, cite, 3]);
 
   async function fetchArchiveNames() {
     const { data, error } = await supabase
