@@ -11,10 +11,10 @@ export default function Legal({ isOpen, onClose }) {
         </header>
         
         <div style={{ maxHeight: '70vh', overflowY: 'auto', fontSize: '0.9rem', lineHeight: '1.5' }}>
-          <h3>1. Confidentialité</h3>
+          <h3>1. Confidentialité & Stockage</h3>
           <p>
-            Toutes vos données financières sont stockées exclusivement dans le <strong>localStorage</strong> de votre navigateur. 
-            Aucune information n'est transmise à un serveur tiers ou au créateur de l'application.
+            Vos données financières sont stockées de manière sécurisée dans une base de données cloud (**Supabase**). 
+            Contrairement au stockage local, vos informations sont conservées même si vous videz le cache de votre navigateur ou si vous changez d'appareil.
           </p>
 
           <h3>2. Éditeur du site</h3>
@@ -22,26 +22,25 @@ export default function Legal({ isOpen, onClose }) {
             Cette application est un projet personnel développé par <strong>Hugues_Manøng 🏴‍☠️</strong>.
           </p>
 
-          <h3>3. Responsabilité</h3>
+          <h3>3. Sécurité des données</h3>
           <p>
-            L'utilisateur est responsable de la gestion de ses données. La suppression du cache du navigateur entraînera la perte définitive des transactions enregistrées.
+            Bien que les données soient stockées à distance, elles restent liées à votre session actuelle. L'éditeur s'engage à ne pas vendre ni analyser vos données personnelles à des fins commerciales.
           </p>
 
-          
           <h3>4. Contact</h3>
-<p>
-  Pour toute question ou suggestion : <br />
-  📧 <a 
-       href="mailto:huguesmanong23@gmail.com?subject=Contact%20Suivi%20de%20Dépenses" 
-       style={{ 
-         color: 'var(--primary-color)', 
-         fontWeight: 'bold',
-         textDecoration: 'none' 
-       }}
-     >
-       huguesmanong23@gmail.com
-     </a>
-</p>
+          <p>
+            Pour toute question ou suggestion : <br />
+            📧 <a 
+                 href="mailto:huguesmanong23@gmail.com?subject=Contact%20Suivi%20de%20Dépenses" 
+                 style={{ 
+                   color: 'var(--primary-color)', 
+                   fontWeight: 'bold',
+                   textDecoration: 'none' 
+                 }}
+               >
+                 huguesmanong23@gmail.com
+               </a>
+          </p>
         </div>
 
         <button className="btn-submit" onClick={onClose} style={{ marginTop: '20px' }}>
