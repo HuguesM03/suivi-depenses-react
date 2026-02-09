@@ -1,58 +1,78 @@
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-export default function ExpenseChart({ transactions }) {
-  // On ne prend que les dépenses (montants négatifs)
+const ExpenseChart = ({ transactions }) => {
+  // 1. Filtrer les dépenses uniquement
   const expenses = transactions.filter(t => t.amount < 0);
-  
-  // On regroupe par catégorie
-  const categories = {};
-  expenses.forEach(t => {
-    // On extrait la catégorie du texte "Nom (Catégorie)"
-    const match = t.text.match(/\(([^)]+)\)/);
-    const cat = match ? match[1] : 'Autre';
-    
-    categories[cat] = (categories[cat] || 0) + Math.abs(t.amount);
-  });
 
-  const data = {
-    labels: Object.keys(categories),
-    datasets: [
-      {
-        label: 'Dépenses par catégorie',
-        data: Object.values(categories),
-        backgroundColor: [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56',
-          '#4BC0C0',
-          '#9966FF',
-          '#FF9F40',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
+  // 2. Calculer le total des dépenses pour le calcul des %
+  const totalExpenses = expenses.reduce((acc, current) => acc + Math.abs(current.amount), 0);
 
-  const options = {
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: document.body.classList.contains('dark-theme') ? '#fff' : '#333'
-        }
-      }
-    }
-  };
+  // 3. Regrouper et additionner par catégorie
+  const dataMap = expenses.reduce((acc, current) => {
+    const category = current.category || 'Autre 📦';
+    const amount = Math.abs(current.amount);
+    acc[category] = (acc[category] || 0) + amount;
+    return acc;
+  }, {});
 
-  if (expenses.length === 0) return null;
+  // 4. Formater les données
+  const chartData = Object.keys(dataMap).map(category => ({
+    name: category,
+    value: parseFloat(dataMap[category].toFixed(2)),
+    // Calcul du pourcentage individuel
+    percentage: ((dataMap[category] / totalExpenses) * 100).toFixed(1)
+  }));
+
+  const COLORS = ['#FF4D6D', '#0088FE', '#FFBB28', '#00C49F', '#FF8042', '#9b59b6'];
+
+  if (chartData.length === 0) return null;
 
   return (
-    <div style={{ margin: '30px 0', padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
-      <h4 style={{ textAlign: 'center', marginBottom: '15px' }}>Répartition des dépenses</h4>
-      <Pie data={data} options={options} />
+    <div style={{ width: '100%', height: 450, marginTop: '20px' }}>
+      <h3 style={{ textAlign: 'center', fontSize: '1.2rem', color: '#333', fontWeight: 'bold' }}>
+        Répartition des dépenses
+      </h3>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="45%"
+            innerRadius={100} // Création de l'effet "Donut" (trou central)
+            outerRadius={150} // Taille "grosse" pour ton écran
+            paddingAngle={5}  // Espace entre les tranches pour éviter l'entremêlement
+            dataKey="value"
+            label={false}
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+            ))}
+          </Pie>
+          
+          {/* Tooltip personnalisé avec Montant + Pourcentage */}
+          <Tooltip 
+            formatter={(value, name, props) => [
+              `${value.toFixed(2)} € (${props.payload.percentage}%)`, 
+              name
+            ]}
+            contentStyle={{ 
+              borderRadius: '12px', 
+              border: 'none', 
+              boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+              padding: '10px'
+            }}
+          />
+          
+          <Legend 
+            verticalAlign="bottom" 
+            align="center"
+            iconType="circle"
+            wrapperStyle={{ paddingTop: '30px' }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   );
-}
+};
+
+export default ExpenseChart;

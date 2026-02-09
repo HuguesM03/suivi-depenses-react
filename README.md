@@ -1,16 +1,27 @@
-# React + Vite
+# 📊 Expense-Tracker Pro
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Une application web moderne de gestion de finances personnelles, performante et sécurisée, développée avec **React** et **Supabase**.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## React Compiler
+## 🚀 Fonctionnalités Clés
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* **Authentification Sécurisée** : Connexion et inscription gérées via Supabase Auth.
+* **Synchronisation Realtime** : Mise à jour instantanée du solde et du graphique dès qu'une opération est effectuée (Postgres Changes).
+* **Visualisation de Données** : Graphique type "Donut" dynamique (Recharts) avec répartition par catégories et pourcentages.
+* **Gestion Multidevises** : Support natif pour l'Euro (€), le Dollar ($) et le FCFA.
+* **Système d'Archivage Cloud** : Possibilité d'archiver les transactions par mois/période pour garder une vue actuelle propre.
+* **Interface Responsive & Dark Mode** : Design soigné adaptable sur mobile et desktop avec un switch de thème intégré.
 
-## Expanding the ESLint configuration
+## 🛠️ Stack Technique
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+* **Frontend** : React.js (Hooks, State Management)
+* **Backend** : Supabase (PostgreSQL + Realtime Engine)
+* **Graphiques** : Recharts
+* **Style** : CSS3 moderne avec Variables Dynamiques
+
+## 📦 Installation
+
+1. Clonez le dépôt :
+   ```bash
+   git clone [https://github.com/HuguesM03/suivi-depenses-react](https://github.com/HuguesM03/suivi-depenses-react)

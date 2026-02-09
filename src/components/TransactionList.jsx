@@ -54,19 +54,21 @@ export default function TransactionList({ transactions, onDelete, onClear, curre
         }}
       />
 
-      <ul className="list">
-        {filteredTransactions.map(transaction => (
-          <li key={transaction.id} className={transaction.amount < 0 ? 'minus' : 'plus'}>
-            {transaction.text} 
-            <span>
-              {transaction.amount < 0 ? '-' : '+'}
-              {Math.abs(transaction.amount)}
-              {currency}
-            </span>
-            <button onClick={() => onDelete(transaction.id)} className="delete-btn">x</button>
-          </li>
-        ))}
-      </ul>
+<ul className="list">
+  {filteredTransactions.map(transaction => (
+    <li key={transaction.id} className={transaction.amount < 0 ? 'minus' : 'plus'}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+        <span>
+          {transaction.text} <small style={{ opacity: 0.6 }}>({transaction.category})</small>
+        </span>
+        <span style={{ fontWeight: 'bold', marginLeft: '10px' }}>
+          {transaction.amount < 0 ? '-' : '+'}{Math.abs(transaction.amount).toFixed(2)}{currency}
+        </span>
+      </div>
+      <button onClick={() => onDelete(transaction.id)} className="delete-btn">x</button>
+    </li>
+  ))}
+</ul>
 
       {/* Message si la recherche ne donne rien ou si la liste est vide */}
       {filteredTransactions.length === 0 && (

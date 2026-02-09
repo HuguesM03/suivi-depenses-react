@@ -1,69 +1,69 @@
 import { useState } from 'react';
 
-export default function AddTransaction({ onAdd }) {
+const AddTransaction = ({ onAdd }) => {
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState('Autre 📦'); // Valeur par défaut
+  const [type, setType] = useState('expense'); // Par défaut c'est une dépense
 
   const onSubmit = (e) => {
     e.preventDefault();
 
-    if (text.trim() === '' || amount === 0 || amount === '') {
-      alert("Veuillez entrer un nom et un montant valide");
+    if (!text || !amount) {
+      alert('Veuillez ajouter un titre et un montant');
       return;
     }
 
-    // LOGIQUE SMART : On définit quelles catégories sont des dépenses par défaut
-    const expenseCategories = ['Nourriture', 'Loyer', 'Loisirs', 'Transport', 'Santé', 'Netflix', 'Canal+', 'Amazon/prime', 'Spotify', 'Internet',];
-    
-    let finalAmount = parseFloat(amount);
-
-    // Si la catégorie est une dépense et que l'utilisateur a oublié le signe "-"
-    if (expenseCategories.includes(category) && finalAmount > 0) {
-      finalAmount = -finalAmount;
-    }
-
-   const newTransaction = {
+    // On envoie l'objet complet à App.jsx
+    onAdd({
       text,
-      amount: parseFloat(amount), // Conversion impérative en nombre
-      category: 'Divers' // Optionnel : tu pourras ajouter un select plus tard
-    };
+      amount: parseFloat(amount),
+      category,
+      type
+    });
 
-    onAdd(newTransaction);
+    // Réinitialisation du formulaire après l'ajout
     setText('');
     setAmount('');
+    setCategory('Autre 📦');
   };
 
   return (
-    <>
-      <h3>Ajouter une transaction</h3>
+    <div className="add-transaction-container">
+      <h3>Ajouter une nouvelle transaction</h3>
       <form onSubmit={onSubmit}>
         <div className="form-control">
-          <label htmlFor="text">Nom de la transaction</label>
+          <label htmlFor="text">Titre</label>
           <input 
             type="text" 
             value={text} 
             onChange={(e) => setText(e.target.value)} 
-            placeholder="Ex: Salaire, Courses..." 
+            placeholder="Ex: Salaire, Course, Loyer..." 
           />
+        </div>
+
+        <div className="form-control">
+          <label htmlFor="type">Type de transaction</label>
+          <select value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="expense">Dépense 💸</option>
+            <option value="income">Revenu 💰</option>
+          </select>
         </div>
 
         <div className="form-control">
           <label htmlFor="category">Catégorie</label>
           <select value={category} onChange={(e) => setCategory(e.target.value)}>
-           
-            <option value="Nourriture">Nourriture 🍔</option>
-            <option value="Loyer">Loyer 🏠</option>
-            <option value="Salaire">Salaire 💰</option>
-            <option value="Canal+">Canal+📺</option>
-            <option value="Loyer">Netflix 📺</option>
-            <option value="Amazon/prime">Amazon/prime 📦</option>
-            <option value="Spotify">Spotify 🎵</option>
-            <option value="Internet">Internet 🌐</option>
-            <option value="Autre">Autre</option>
-            <option value="Loisirs">Loisirs 🎮</option>
-            <option value="Transport">Transport 🚗</option>
-            <option value="Santé">Santé 💊</option>
+            <option value="Salaire 💰">Salaire 💰</option>
+            <option value="Loisirs 🎮">Loisirs 🎮</option>
+            <option value="Canal + 📺">Canal + 📺</option>
+            <option value="Netflix 🎬">Netflix 🎬</option>
+            <option value="Spotify 🎵">Spotify 🎵</option>
+            <option value="Nourriture 🍕">Nourriture 🍕</option>
+            <option value="Loyer 🏠">Loyer 🏠</option>
+            <option value="Santé 🏥">Santé 🏥</option>
+            <option value="Transport 🚗">Transport 🚗</option>
+            <option value="Cadeau 🎁">Cadeau 🎁</option>
+            <option value="Autre 📦">Autre 📦</option>
           </select>
         </div>
 
@@ -76,14 +76,17 @@ export default function AddTransaction({ onAdd }) {
             onChange={(e) => setAmount(e.target.value)} 
             placeholder="Entrez le montant..." 
           />
-          <p className="helper-text">
-            💡 <strong>Indice :</strong> Il est important de mettre le signe (-) devant les montants des dépenses ex: (-150.50) pour une dépense de 150,50€.
-            <br />
-            💡 <strong>Auto-correction :</strong> Les catégories comme Loyer , Loisirs ou Nourriture seront enregistrées en négatif automatiquement.
-          </p>
+          <small>
+            {type === 'expense' 
+              ? "💡 Le signe (-) sera ajouté automatiquement." 
+              : "💡 Le montant sera enregistré en positif."}
+          </small>
         </div>
-        <button className="btn">Ajouter la transaction</button>
+
+        <button className="btn-submit">Ajouter la transaction</button>
       </form>
-    </>
+    </div>
   );
-}
+};
+
+export default AddTransaction;
