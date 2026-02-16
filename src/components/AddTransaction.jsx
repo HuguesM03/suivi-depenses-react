@@ -3,8 +3,8 @@ import { useState } from 'react';
 const AddTransaction = ({ onAdd }) => {
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Autre 📦'); // Valeur par défaut
-  const [type, setType] = useState('expense'); // Par défaut c'est une dépense
+  const [category, setCategory] = useState('Autre 📦'); 
+  const [type, setType] = useState('expense'); 
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -14,7 +14,7 @@ const AddTransaction = ({ onAdd }) => {
       return;
     }
 
-    // On envoie l'objet complet à App.jsx
+    
     onAdd({
       text,
       amount: parseFloat(amount),
@@ -22,7 +22,7 @@ const AddTransaction = ({ onAdd }) => {
       type
     });
 
-    // Réinitialisation du formulaire après l'ajout
+    
     setText('');
     setAmount('');
     setCategory('Autre 📦');

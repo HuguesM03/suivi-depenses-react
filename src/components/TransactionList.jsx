@@ -3,7 +3,7 @@ import { useState } from 'react';
 export default function TransactionList({ transactions, onDelete, onClear, currency }) {
   const [filter, setFilter] = useState('');
 
-  // Logique pour filtrer les transactions par nom
+  
   const filteredTransactions = transactions.filter(t => 
     t.text.toLowerCase().includes(filter.toLowerCase())
   );

@@ -1,13 +1,9 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-const ExpenseChart = ({ transactions }) => {
-  // 1. Filtrer les dépenses uniquement
+const ExpenseChart = ({ transactions, currency }) => { 
   const expenses = transactions.filter(t => t.amount < 0);
-
-  // 2. Calculer le total des dépenses pour le calcul des %
   const totalExpenses = expenses.reduce((acc, current) => acc + Math.abs(current.amount), 0);
 
-  // 3. Regrouper et additionner par catégorie
   const dataMap = expenses.reduce((acc, current) => {
     const category = current.category || 'Autre 📦';
     const amount = Math.abs(current.amount);
@@ -15,11 +11,9 @@ const ExpenseChart = ({ transactions }) => {
     return acc;
   }, {});
 
-  // 4. Formater les données
   const chartData = Object.keys(dataMap).map(category => ({
     name: category,
     value: parseFloat(dataMap[category].toFixed(2)),
-    // Calcul du pourcentage individuel
     percentage: ((dataMap[category] / totalExpenses) * 100).toFixed(1)
   }));
 
@@ -38,9 +32,9 @@ const ExpenseChart = ({ transactions }) => {
             data={chartData}
             cx="50%"
             cy="45%"
-            innerRadius={100} // Création de l'effet "Donut" (trou central)
-            outerRadius={150} // Taille "grosse" pour ton écran
-            paddingAngle={5}  // Espace entre les tranches pour éviter l'entremêlement
+            innerRadius={100} 
+            outerRadius={150} 
+            paddingAngle={5}  
             dataKey="value"
             label={false}
           >
@@ -49,10 +43,9 @@ const ExpenseChart = ({ transactions }) => {
             ))}
           </Pie>
           
-          {/* Tooltip personnalisé avec Montant + Pourcentage */}
           <Tooltip 
             formatter={(value, name, props) => [
-              `${value.toFixed(2)} € (${props.payload.percentage}%)`, 
+              `${value.toFixed(2)} ${currency} (${props.payload.percentage}%)`, 
               name
             ]}
             contentStyle={{ 

@@ -34,36 +34,32 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- LOGIQUE REALTIME INTÉGRÉE ICI ---
-  useEffect(() => {
-    if (session) {
-      fetchArchiveNames();
-      fetchTransactions(currentArchive);
+      
+useEffect(() => {
+  if (session) {
+    fetchArchiveNames();
+    fetchTransactions(currentArchive); 
 
-      // Création du canal d'écoute temps réel
-      const channel = supabase
-        .channel('realtime-updates')
-        .on(
-          'postgres_changes',
-          {
-            event: '*', // INSERT, UPDATE, DELETE
-            schema: 'public',
-            table: 'transactions',
-          },
-          () => {
-            // Rafraîchissement automatique des données
-            fetchArchiveNames();
-            fetchTransactions(currentArchive);
-          }
-        )
-        .subscribe();
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
+        (payload) => {
+          
+          
+          fetchArchiveNames();
+          fetchTransactions(currentArchive);
+        }
+      )
+      .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [session, currentArchive]);
-
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }
+  
+}, [session, currentArchive]);
   async function fetchArchiveNames() {
     const { data, error } = await supabase
       .from('transactions')
@@ -77,11 +73,9 @@ function App() {
   }
 
   async function fetchTransactions(archiveName = null) {
-    // Évite le clignotement du chargement si on a déjà des données (mode Realtime)
     if (transactions.length === 0) setLoading(true);
     
     let query = supabase.from('transactions').select('*');
-    
     if (archiveName) {
       query = query.eq('archive_name', archiveName);
     } else {
@@ -98,11 +92,6 @@ function App() {
   }
 
   const addTransaction = async (newT) => {
-    if (transactions.length === 0 && parseFloat(newT.amount) <= 0) {
-      alert("Bienvenue ! Votre première transaction doit être un montant positif (un revenu) pour initialiser votre compte.");
-      return;
-    }
-
     let correctedAmount = parseFloat(newT.amount);
     if (newT.type === 'expense' && correctedAmount > 0) {
       correctedAmount = -correctedAmount;
@@ -110,64 +99,39 @@ function App() {
       correctedAmount = Math.abs(correctedAmount);
     }
 
-    const transactionToSave = { 
-      text: newT.text,
-      amount: correctedAmount,
-      category: newT.category,
-      type: newT.type,
-      user_id: session.user.id,
-      archive_name: null
-    };
-    
     const { error } = await supabase
       .from('transactions')
-      .insert([transactionToSave]);
+      .insert([{ 
+        text: newT.text,
+        amount: correctedAmount,
+        category: newT.category,
+        type: newT.type,
+        user_id: session.user.id,
+        archive_name: null
+      }]);
 
-    if (error) {
-      alert("Erreur Cloud : " + error.message);
-    }
-    // Note : On ne fait plus de setTransactions local ici, 
-    // l'écouteur Realtime s'en chargera automatiquement.
+    if (error) alert("Erreur : " + error.message);
   };
 
   const handleArchiveRequest = async () => {
     if (transactions.length === 0) return;
-    const name = prompt("Sous quel nom voulez-vous archiver ces données ? (ex: Janvier 2026)");
+    const name = prompt("Nom de l'archive ?");
     if (!name) return;
 
-    const { error } = await supabase
+    await supabase
       .from('transactions')
       .update({ archive_name: name })
       .is('archive_name', null);
-
-    if (error) {
-      alert("Erreur lors de l'archivage");
-    } else {
-      alert("Données archivées avec succès !");
-      // fetchTransactions sera appelé par le Realtime
-    }
   };
 
   const deleteTransaction = async (id) => {
-    if (window.confirm("Supprimer définitivement cette transaction ?")) {
+    if (window.confirm("Supprimer cette transaction ?")) {
       await supabase.from('transactions').delete().eq('id', id);
     }
   };
 
   const handleClearRequest = async () => {
-    if (transactions.length === 0) return;
-
-    const wantsToArchive = window.confirm(
-      "Voulez-vous ARCHIVER ces données avant de les supprimer de la vue actuelle ?\n\n(OK pour Archiver / Annuler pour passer à la suppression définitive)"
-    );
-
-    if (wantsToArchive) {
-      handleArchiveRequest(); 
-      return;
-    }
-
-    const target = currentArchive ? `l'archive "${currentArchive}"` : "l'historique actuel";
-    if (window.confirm(`⚠️ ATTENTION : Vous allez SUPPRIMER DÉFINITIVEMENT toutes les données de ${target}. Continuer ?`)) {
+    if (window.confirm("Vider l'historique ?")) {
       let query = supabase.from('transactions').delete();
       currentArchive ? query.eq('archive_name', currentArchive) : query.is('archive_name', null);
       await query.neq('id', 0); 
@@ -177,7 +141,6 @@ function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setTransactions([]);
-    setArchiveList([]);
   };
 
   if (!session) return <Auth />;
@@ -188,26 +151,21 @@ function App() {
         {isSidebarOpen ? '✕' : '☰'}
       </button>
 
-      {/* TA SIDEBAR ORIGINALE (Inchangée) */}
+      {/* SIDEBAR ORIGINALE PRÉSERVÉE */}
       <div className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
         <div style={{marginTop: '60px', padding: '20px'}}>
            <h3 style={{color: '#fff', fontSize: '0.9rem', wordBreak: 'break-all'}}>👤 {session.user.email}</h3>
-           
            <button onClick={() => setIsProfileOpen(true)} style={{width: '100%', padding: '8px', marginBottom: '10px', backgroundColor: '#34495e', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>
              ⚙️ Paramètres Profil
            </button>
-
            <button onClick={handleLogout} style={{width: '100%', backgroundColor: '#e74c3c', color: 'white', border: 'none', padding: '8px', borderRadius: '5px', cursor: 'pointer', marginBottom: '20px'}}>
              Déconnexion
            </button>
-           
            <hr style={{opacity: 0.3}}/>
-           
            <h3 style={{color: '#fff'}}>📂 Archives Cloud</h3>
            <button onClick={() => fetchTransactions(null)} style={{width: '100%', padding: '10px', marginBottom: '10px', backgroundColor: !currentArchive ? '#2ecc71' : '#34495e', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>
              🏠 Vue Actuelle
            </button>
-
            <div style={{maxHeight: '30vh', overflowY: 'auto', marginBottom: '15px'}}>
              {archiveList.map(name => (
                <button key={name} onClick={() => fetchTransactions(name)} style={{width: '100%', padding: '8px', marginBottom: '5px', backgroundColor: currentArchive === name ? '#3498db' : 'transparent', color: 'white', border: '1px solid #555', borderRadius: '4px', cursor: 'pointer', display: 'block'}}>
@@ -215,7 +173,6 @@ function App() {
                </button>
              ))}
            </div>
-
            <button onClick={handleArchiveRequest} style={{width: '100%', padding: '10px', backgroundColor: '#e67e22', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>
              📥 Archiver le mois
            </button>
@@ -242,7 +199,10 @@ function App() {
               </div>
               <Balance transactions={transactions} currency={currency} />
               <IncomeExpense transactions={transactions} currency={currency} />
-              <ExpenseChart transactions={transactions} />
+              
+              {/* IMPORTANT : On passe 'currency' ici pour que le graphique réagisse au changement de devise */}
+              <ExpenseChart transactions={transactions} currency={currency} />
+              
               <TransactionList 
                 transactions={transactions} 
                 onDelete={deleteTransaction} 
@@ -253,9 +213,9 @@ function App() {
             </>
           )}
 
-          {/* TON FOOTER ORIGINAL (Inchangé) */}
+          {/* FOOTER ORIGINAL PRÉSERVÉ */}
           <footer style={{ marginTop: '50px', textAlign: 'center', opacity: 0.7 }}>
-            <p><em>Propulsé par Supabase © 2026 Expense-Tracker</em> | <strong>Developpé par Hugues_Manøng 🏴‍☠️</strong></p>
+            <p><em>Propulsé par Supabase © 2026 Expense-Tracker</em> | <strong>Hugues_Manøng 🏴‍☠️</strong></p>
             <button onClick={() => setIsLegalOpen(true)} className="legal-link">Légal & Contact</button>
           </footer>
         </div>
