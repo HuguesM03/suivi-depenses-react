@@ -1,10 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const AddTransaction = ({ onAdd }) => {
+const AddTransaction = ({ onAdd, transactions = [] }) => {
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Autre 📦'); 
-  const [type, setType] = useState('expense'); 
+  const [type, setType] = useState('expense');
+
+  const hasIncome = transactions.some(t => t.amount > 0);
+
+  useEffect(() => {
+    if (!hasIncome && type === 'expense') {
+      setType('income');
+      setCategory('Salaire 💰');
+    }
+  }, []);
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -14,7 +23,16 @@ const AddTransaction = ({ onAdd }) => {
       return;
     }
 
-    
+    if (!hasIncome && type === 'expense') {
+      alert('⚠️ La première transaction doit être un REVENU avant de pouvoir effectuer des dépenses.');
+      return;
+    }
+
+    if (type === 'expense' && category === 'Salaire 💰') {
+      alert('La catégorie "Salaire" n\'est pas compatible avec une dépense. Veuillez sélectionner "Revenu" comme type.');
+      return;
+    }
+
     onAdd({
       text,
       amount: parseFloat(amount),
@@ -22,7 +40,6 @@ const AddTransaction = ({ onAdd }) => {
       type
     });
 
-    
     setText('');
     setAmount('');
     setCategory('Autre 📦');
@@ -44,7 +61,18 @@ const AddTransaction = ({ onAdd }) => {
 
         <div className="form-control">
           <label htmlFor="type">Type de transaction</label>
-          <select value={type} onChange={(e) => setType(e.target.value)}>
+          <select value={type} onChange={(e) => {
+            if (e.target.value === 'expense' && !hasIncome) {
+              alert('⚠️ La première transaction doit être un REVENU avant de pouvoir effectuer des dépenses.');
+              return;
+            }
+            setType(e.target.value);
+            if (e.target.value === 'income') {
+              setCategory('Salaire 💰');
+            } else {
+              setCategory('Autre 📦');
+            }
+          }}>
             <option value="expense">Dépense 💸</option>
             <option value="income">Revenu 💰</option>
           </select>

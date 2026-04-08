@@ -113,6 +113,9 @@ function App() {
     const key = name ?? null;
     setCurrentArchive(key);
     setTransactions(cache.current[key] || []);
+    if (key === null && !cache.current.hasOwnProperty(null)) {
+      cache.current[null] = [];
+    }
   };
 
   const addTransaction = async (newT) => {
@@ -232,7 +235,7 @@ function App() {
             onClear={handleClearRequest}
             currency={currency}
           />
-          {!currentArchive && <AddTransaction onAdd={addTransaction} />}
+          {!currentArchive && <AddTransaction onAdd={addTransaction} transactions={transactions} />}
 
           <footer style={{ marginTop: '50px', textAlign: 'center', opacity: 0.7 }}>
             <p><em>Propulsé par Supabase © 2026 Expense-Tracker</em> | <strong>Hugues_Manøng 🏴‍☠️</strong></p>

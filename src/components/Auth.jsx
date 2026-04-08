@@ -15,7 +15,13 @@ export default function Auth() {
       ? await supabase.auth.signUp({ email, password })
       : await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) alert(error.message);
+    if (error) {
+      if (error.message.includes('fetch')) {
+        alert('Erreur de connexion. Vérifiez votre connexion internet et réessayez.');
+      } else {
+        alert(error.message);
+      }
+    }
     else if (isSignUp) alert('Vérifiez vos emails pour confirmer l’inscription !');
     setLoading(false);
   };
